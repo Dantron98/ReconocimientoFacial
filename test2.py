@@ -2,11 +2,9 @@ import keras
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, Conv2D, Dropout, Activation, MaxPooling2D, Flatten
-from tensorflow.keras.optimizers import RMSprop, SGD
-import os
-import pathlib
+import datetime
+
+
 np.set_printoptions(precision=4)
 #with open('data/list_attr_celeba.csv', 'r') as f:
 #    print('skipping : ' + f.readline())
@@ -19,7 +17,8 @@ np.set_printoptions(precision=4)
 
 df = pd.read_csv('data/list_attr_celeba.csv', sep=',', header=None)
 df = df[1:]
-
+print(df.head())
+#exit()
 #df.iloc[:, 1:].replace(to_replace=-1, value=0)
 #print(df.head())
 #exit()
@@ -30,15 +29,18 @@ df = df[1:]
 #exit()
 
 
-x = np.asarray(df.iloc[:, 1:]).astype('int64')
+
 df.replace(to_replace=-1, value=0, inplace=True)
+df.replace(to_replace='0', value=0, inplace=True)
 df.replace(to_replace='-1', value=0, inplace=True)
 df.replace(to_replace='1', value=1, inplace=True)
+x = np.asarray(df.iloc[:, 1:]).astype('int64')
+print(df.head())
 
 files = tf.data.Dataset.from_tensor_slices(df[0])
 attributes = tf.data.Dataset.from_tensor_slices(x)
 data = tf.data.Dataset.zip((files, attributes))
-
+print(attributes)
 path_to_images = 'data/img_align_celeba/'
 
 def process_file(file_name, attributes):
@@ -47,24 +49,25 @@ def process_file(file_name, attributes):
     image = tf.image.resize(image, [192, 192])
     image /= 255.0
     return image, attributes
-
-labeled_images = data.map(process_file)
+batch_size = 50
+labeled_images = data.map(process_file).batch(batch_size)
 
 num_class = 39
-epochs = 30
-batch_size = 50
+epochs = 10
+
 num_train = 150000
 num_test = len(df) - num_train
 epochs_step = num_train // batch_size
 test_step = num_test // batch_size
 data_train = labeled_images.take(num_train)
 data_test = labeled_images.skip(num_train)
-AUTOTUNE = tf.data.AUTOTUNE
-def configure_for_performance(ds):
-    ds = ds.shuffle(buffer_size=1000)
-    ds = ds.batch(batch_size)
-    ds = ds.prefetch(buffer_size=AUTOTUNE)
-    return ds
+#AUTOTUNE = tf.data.AUTOTUNE
+
+#def configure_for_performance(ds):
+#    ds = ds.shuffle(buffer_size=1000)
+#    ds = ds.batch(batch_size)
+#    ds = ds.prefetch(buffer_size=AUTOTUNE)
+#    return ds
 
 #print(data_train)
 #print(data_test)
@@ -81,8 +84,23 @@ def configure_for_performance(ds):
 #data_train = b.concatenate(data_train)
 #data_train = tf.concat([b, data_train], 0)
 #print(data_train)
-data_train = configure_for_performance(data_train)
-data_test = configure_for_performance(data_test)
+#for images, labels in data_train.take(1):
+#    X_train = images.numpy()
+#    y_train = labels.numpy()
+#    print('antes del performance')
+#    print(y_train.shape)
+#    print(len(y_train))
+#    print(y_train)
+
+#data_train = configure_for_performance(data_train)
+#data_test = configure_for_performance(data_test)
+#for images, labels in data_train.take(1):
+#    X_train = images.numpy()
+#    y_train = labels.numpy()
+#    print('-------------')
+#    print(y_train.shape)
+#    print(len(y_train))
+#    print(y_train)
 
 #data_train = tf.expand_dims(data_train, 0)
 #data_test = data_test[None, :, :, :]
@@ -119,17 +137,21 @@ x = tf.keras.layers.Dropout(0.2)(x)
 x = tf.keras.layers.Flatten()(x)
 x = tf.keras.layers.Dense(64, activation='relu')(x)
 output = tf.keras.layers.Dense(40, activation='sigmoid')(x)
-model = tf.keras.Model(inputs= inputs, outputs=output)
+model = tf.keras.Model(inputs=inputs, outputs=output)
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tbCallBack = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True, write_images=True)
+
 model.summary()
-model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
-              metrics=['accuracy'])
-model.fit(
-    data_train,
+model.compile(optimizer=tf.optimizers.RMSprop(learning_rate=0.001),
+              loss=tf.keras.losses.BinaryCrossentropy(),
+              metrics=[tf.keras.metrics.BinaryAccuracy()])
+
+model.fit(data_train,
     batch_size=batch_size,
     epochs=epochs,
-    validation_data=data_test
-)
+    validation_data=data_test,
+    callbacks=[tbCallBack])
 
+model.save('test1.h5')
 
 
