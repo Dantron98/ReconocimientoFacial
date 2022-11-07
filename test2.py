@@ -59,18 +59,30 @@ epochs_step = num_train // batch_size
 test_step = num_test // batch_size
 data_train = labeled_images.take(num_train)
 data_test = labeled_images.skip(num_train)
+AUTOTUNE = tf.data.AUTOTUNE
+def configure_for_performance(ds):
+    ds = ds.shuffle(buffer_size=1000)
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(buffer_size=AUTOTUNE)
+    return ds
 
-
-print(data_train)
-print(data_test)
+#print(data_train)
+#print(data_test)
 #a = np.array([1]).astype('int64')
-#b = tf.constant(a)
-a = tf.data.Dataset.range(1)
-#print(b)
-data_train = a.concatenate(data_train)
-#data_train = tf.concat([b, data_train], 0)
-print(data_train)
+#b = tf.constant(a, dtype=tf.float32)
+#c = tf.data.Dataset.range(1)
 
+#print('este es c:')
+#print(c)
+#tf.cast(a, tf.float32)
+#print(a)
+#print(b)
+#exit()
+#data_train = b.concatenate(data_train)
+#data_train = tf.concat([b, data_train], 0)
+#print(data_train)
+data_train = configure_for_performance(data_train)
+data_test = configure_for_performance(data_test)
 
 #data_train = tf.expand_dims(data_train, 0)
 #data_test = data_test[None, :, :, :]
