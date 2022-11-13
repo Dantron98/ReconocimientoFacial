@@ -1,0 +1,9 @@
+## Primer código
+Lo primero que hice fue basarme en la clase en la cual se importaron los datos, pero al realizar las funciones para modificar el archivo *.txt* por alguna razón me devolvía un archivo con solo 60 filas por lo que tuve que buscar una solución. Busque en Kaggle la base de datos y encontré un archivo *.csv* ya limpio así que me decante por usar ese. Posteriormente una vez que los datos ya estaban listos me dedique al diseño de la red neuronal, basandome en los códigos vistos en clase y utilizando la estructura de API fuctional se diseño la primera red neuronal con el objetivo de que reconozca rostros. Al momento de entrenar la red surgieron dos problema el primero fue el shape del data set, esto se arregló añadiendo *.batch(batch_size)* en la linea 28, con esa linea ya entrenaba la red, pero entonces surgió el segundo problema que fue el hecho de que la *loss function* se iba a valores negativos provocando un estancamiento en la precisión. Este problema surgió porque a pesar de que los datos estaban normalizados le estaba pasando la parte del data frame antes de normalizar los datos. Finalmente al solucionar esta parte la red se pudo entrenar obteniendo las siguientes gráficas: 
+![[sumaryRdR.png]]
+![[accuracyRdR.png]]
+![[lossRdR.png]]
+## Segundo código
+En el segundo código me base en el ejemplo para la clasificacion de perros y gatos, primero descargue todas las fotos en la cual saliera yo solo, consiguiendo un total de 160, cree un directorio test y un train y con un scrip de python moví el 80% de las imágenes a train y el restante a test, también con otro scrip de python tome la misma cantidad de imágenes de la base de datos de Celeba. Cargué la base de datos y al mismo tiempo cargué el modelo preentrenado al cual le congele las capas para que no se entrenen y finalmente le agregue una última capa con una sola neurona y se obtuvo lo siguiente.
+![[sumaryRecdeMI.png]] ![[lossRecdeMi.png]]
+![[acurracyRecdeMi.png]] 
